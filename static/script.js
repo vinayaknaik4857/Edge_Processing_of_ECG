@@ -103,6 +103,44 @@ const squaredChart = new Chart(squaredCtx, {
     }
 });
 
+// --------------------------------------------------
+// Chart workspace selector
+// --------------------------------------------------
+
+const chartByName = {
+    raw: rawChart,
+    filtered: filteredChart,
+    squared: squaredChart
+};
+
+const chartWidgets = document.querySelectorAll(".chart-widget");
+const chartPanels = document.querySelectorAll(".chart-panel");
+
+chartWidgets.forEach(function(widget) {
+
+    widget.addEventListener("click", function() {
+
+        const selectedChart = widget.dataset.chartTarget;
+
+        chartWidgets.forEach(function(button) {
+            button.classList.toggle("active", button === widget);
+        });
+
+        chartPanels.forEach(function(panel) {
+            panel.classList.toggle(
+                "active",
+                panel.dataset.chartPanel === selectedChart
+            );
+        });
+
+        // Chart.js needs a resize after its previously hidden canvas is shown.
+        chartByName[selectedChart].resize();
+        chartByName[selectedChart].update("none");
+
+    });
+
+});
+
 
 // --------------------------------------------------
 // Connection
@@ -204,8 +242,7 @@ socket.on("ecg_data", function(data) {
     if (data.bpm !== null) {
 
         document.getElementById("heartRate")
-        .textContent =
-        data.bpm.toFixed(1) + " BPM";
+        .textContent = data.bpm.toFixed(1);
 
     }
     // ----------------------------------------------
@@ -221,8 +258,10 @@ socket.on("ecg_data", function(data) {
         document.getElementById("alertMessage");
 
         if (rhythmStatus) {
-
-            rhythmStatus.textContent = data.status;
+            const displayedStatus = data.status === "NORMAL"
+                ? "NORMAL"
+                : "ALERT:" + data.status;
+            rhythmStatus.textContent = displayedStatus;
 
             // Remove previous states
             rhythmStatus.classList.remove(
@@ -245,6 +284,12 @@ socket.on("ecg_data", function(data) {
                 rhythmStatus.classList.add("critical");
 
             }
+
+            document.querySelectorAll(".graph-status").forEach(function(status) {
+                status.textContent = displayedStatus;
+                status.classList.toggle("normal", data.status === "NORMAL");
+                status.classList.toggle("critical", data.status !== "NORMAL");
+            });
         }
 
 
@@ -367,3 +412,12 @@ socket.on("stream_end", function() {
 
 });
 
+socket.on("stream_error", function(data) {
+
+    document.getElementById("statusText")
+    .textContent = data.message;
+
+    document.getElementById("statusDot")
+    .style.background = "#ef4444";
+
+});

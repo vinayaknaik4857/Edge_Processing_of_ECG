@@ -3,11 +3,15 @@ ECG_DB/
 Person_01/
 dataset_results.csv
 demos/
+
 # Generated output/logs
 output.log
 
-# Python virtual environment
+# Python virtual environments
 MPenv/
+.venv312/
+venv/
 
 # Python cache
 __pycache__/
+*.pyc
